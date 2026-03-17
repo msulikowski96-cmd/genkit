@@ -1,6 +1,49 @@
 run = "cowsay Configure me!"
 entrypoint = "README.md"
+modules = ["nodejs-20"]
 
 [nix]
-channel = "stable-24_05"
+channel = "stable-24_11"
 packages = ["cowsay"]
+
+[agent]
+expertMode = true
+
+[[ports]]
+localPort = 4000
+externalPort = 3000
+
+[[ports]]
+localPort = 4001
+externalPort = 3002
+
+[[ports]]
+localPort = 4033
+externalPort = 80
+
+[[ports]]
+localPort = 4034
+externalPort = 3001
+
+[workflows]
+runButton = "Project"
+
+[[workflows.workflow]]
+name = "Project"
+mode = "parallel"
+author = "agent"
+
+[[workflows.workflow.tasks]]
+task = "workflow.run"
+args = "Start application"
+
+[[workflows.workflow]]
+name = "Start application"
+author = "agent"
+
+[[workflows.workflow.tasks]]
+task = "shell.exec"
+args = "cd my-genkit-app && genkit start -- npx tsx --watch src/index.ts"
+
+[workflows.workflow.metadata]
+outputType = "console"
