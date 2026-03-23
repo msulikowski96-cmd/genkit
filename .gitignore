@@ -1,0 +1,4 @@
+my-genkit-app/node_modules/
+my-genkit-app/.env
+my-genkit-app/.env.*
+my-genkit-app/dist/
