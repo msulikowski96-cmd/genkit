@@ -1,0 +1,83 @@
+<!DOCTYPE html>
+<html lang="pl">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=1920, height=1080">
+  <title>Asystent AI</title>
+  <link rel="stylesheet" href="css/app.css">
+</head>
+<body>
+  <div id="app">
+    <header class="topbar">
+      <div class="brand">
+        <img class="brand-icon" src="largeIcon.png" alt="">
+        <h1>Asystent AI</h1>
+      </div>
+      <div class="status" id="status">
+        <span class="status-dot" id="status-dot"></span>
+        <span id="status-text">Sprawdzanie połączenia…</span>
+      </div>
+      <button class="btn btn-ghost" id="settings-btn" data-focusable>Ustawienia</button>
+    </header>
+
+    <main class="main">
+      <section class="chat">
+        <div class="chat-log" id="chat-log" data-focusable data-scrollable tabindex="-1" aria-live="polite"></div>
+
+        <div class="composer">
+          <div class="field" id="prompt-field" data-focusable data-input="prompt-input">
+            <input type="text" id="prompt-input" maxlength="2000" placeholder="Naciśnij OK i zadaj pytanie…" autocomplete="off">
+          </div>
+          <button class="btn btn-primary" id="send-btn" data-focusable>Wyślij</button>
+        </div>
+      </section>
+
+      <aside class="sidebar">
+        <h2>Szybkie pytania</h2>
+        <div class="suggestions" id="suggestions"></div>
+        <button class="btn btn-ghost btn-block" id="clear-btn" data-focusable>Wyczyść rozmowę</button>
+      </aside>
+    </main>
+
+    <footer class="hints">
+      <span class="hint"><b class="key">OK</b> wybierz</span>
+      <span class="hint"><b class="key">▲▼◀▶</b> nawigacja</span>
+      <span class="hint"><b class="key key-red"></b> wyczyść</span>
+      <span class="hint"><b class="key key-green"></b> ustawienia</span>
+      <span class="hint"><b class="key">Wstecz</b> cofnij / wyjdź</span>
+    </footer>
+  </div>
+
+  <div class="overlay hidden" id="settings">
+    <div class="dialog" role="dialog" aria-labelledby="settings-title">
+      <h2 id="settings-title">Ustawienia</h2>
+      <label class="label" for="server-input">Adres serwera Genkit</label>
+      <div class="field" id="server-field" data-focusable data-input="server-input">
+        <input type="url" id="server-input" placeholder="np. http://192.168.1.20:3000" autocomplete="off">
+      </div>
+      <p class="help">Komputer lub serwer, na którym działa <b>my-genkit-app</b>. Telewizor musi mieć do niego dostęp w sieci.</p>
+      <p class="test-result" id="test-result"></p>
+      <div class="dialog-actions">
+        <button class="btn btn-ghost" id="test-btn" data-focusable>Testuj połączenie</button>
+        <button class="btn btn-primary" id="save-btn" data-focusable>Zapisz</button>
+        <button class="btn btn-ghost" id="cancel-btn" data-focusable>Anuluj</button>
+      </div>
+    </div>
+  </div>
+
+  <div class="overlay hidden" id="exit-dialog">
+    <div class="dialog dialog-small" role="dialog" aria-labelledby="exit-title">
+      <h2 id="exit-title">Zamknąć aplikację?</h2>
+      <div class="dialog-actions">
+        <button class="btn btn-primary" id="exit-yes" data-focusable>Zamknij</button>
+        <button class="btn btn-ghost" id="exit-no" data-focusable>Zostań</button>
+      </div>
+    </div>
+  </div>
+
+  <script src="js/config.js"></script>
+  <script src="js/navigation.js"></script>
+  <script src="js/api.js"></script>
+  <script src="js/app.js"></script>
+</body>
+</html>
