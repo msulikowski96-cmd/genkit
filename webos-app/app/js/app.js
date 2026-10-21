@@ -73,7 +73,15 @@
     try {
       saved = window.localStorage.getItem(STORAGE_KEY);
     } catch (e) { /* storage unavailable */ }
-    return Api.normalizeBase(saved || APP_CONFIG.defaultServerUrl);
+    return Api.normalizeBase(saved || APP_CONFIG.defaultServerUrl || sameOriginServer());
+  }
+
+  // When the page is served by the Genkit server itself (http://server/tv/),
+  // that same server is the API, so no setup is needed on phones.
+  function sameOriginServer() {
+    var loc = window.location;
+    if (loc.protocol !== 'http:' && loc.protocol !== 'https:') return '';
+    return loc.protocol + '//' + loc.host;
   }
 
   function saveServerUrl(url) {
@@ -85,6 +93,8 @@
   // ---------- Status pill ----------
 
   function setStatus(kind, text) {
+    // Phones have no room for the model name in the header.
+    if (!window.IS_TV) text = text.split(' · ')[0];
     els.status.className = 'status ' + kind;
     els.statusText.textContent = text;
   }
@@ -149,9 +159,10 @@
 
   function showWelcome() {
     addMessage('system',
-      'Cześć! Jestem asystentem AI na Twoim telewizorze.\n' +
-      'Wybierz szybkie pytanie po prawej albo przejdź do pola tekstowego, ' +
-      'naciśnij OK i wpisz własne pytanie.');
+      (window.IS_TV ? 'Cześć! Jestem asystentem AI na Twoim telewizorze.\n' : 'Cześć! Jestem Twoim asystentem AI.\n') +
+      (window.IS_TV
+        ? 'Wybierz szybkie pytanie po prawej albo przejdź do pola tekstowego, naciśnij OK i wpisz własne pytanie.'
+        : 'Wybierz jedno z szybkich pytań albo wpisz własne pytanie w polu na dole.'));
   }
 
   function clearChat() {
@@ -187,7 +198,8 @@
       if (err) {
         // Drop the unanswered question so the history stays user/model/user...
         state.history.pop();
-        addMessage('error', err.message + '\nSprawdź adres serwera w Ustawieniach (zielony przycisk).');
+        addMessage('error', err.message + '\nSprawdź adres serwera w Ustawieniach' +
+          (window.IS_TV ? ' (zielony przycisk).' : '.'));
         setStatus('error', 'Brak połączenia');
         return;
       }
@@ -408,6 +420,10 @@
 
   function init() {
     renderSuggestions();
+    if (!window.IS_TV) {
+      els.promptInput.placeholder = 'Zadaj pytanie…';
+      els.clearBtn.textContent = 'Wyczyść';
+    }
 
     bindField(els.promptField, function () { send(els.promptInput.value); });
     bindField(els.serverField, null);

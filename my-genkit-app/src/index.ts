@@ -1,4 +1,7 @@
+import { readFile } from 'node:fs/promises';
 import { createServer, type IncomingMessage, type ServerResponse } from 'node:http';
+import { extname, resolve, sep } from 'node:path';
+import { fileURLToPath } from 'node:url';
 import { genkit } from 'genkit';
 import { googleAI } from '@genkit-ai/google-genai';
 
@@ -37,6 +40,7 @@ const html = (message: string, generatedText?: string) => `<!doctype html>
     <h1>Genkit starter running on Specific</h1>
     <p>This app is configured to run as a Specific service. Specific injects <code>PORT</code> and your secrets into the process, so the same app can run locally with <code>specific dev</code> and later deploy with <code>specific deploy</code>.</p>
     <div class="status">${message}</div>
+    <p><a href="/tv/">Open the "Asystent AI" app</a> (the LG webOS TV app, also works in a phone browser).</p>
     <form method="POST" action="/generate">
       <label for="prompt">Try a prompt with Genkit</label>
       <textarea id="prompt" name="prompt" placeholder="Write a short welcome message for a new Specific user."></textarea>
@@ -185,14 +189,68 @@ const handleApi = async (
   sendJson(response, 404, { error: 'Not found' });
 };
 
+// --- Serve the webOS app at /tv/ so it also opens in a phone or desktop browser ---
+
+const TV_APP_DIR = resolve(
+  process.env.TV_APP_DIR ?? fileURLToPath(new URL('../../webos-app/app/', import.meta.url)),
+);
+
+const STATIC_TYPES: Record<string, string> = {
+  '.html': 'text/html; charset=utf-8',
+  '.css': 'text/css; charset=utf-8',
+  '.js': 'text/javascript; charset=utf-8',
+  '.json': 'application/json; charset=utf-8',
+  '.png': 'image/png',
+};
+
+const serveTvApp = async (urlPath: string, response: ServerResponse): Promise<void> => {
+  if (urlPath === '/tv') {
+    response.writeHead(301, { location: '/tv/' });
+    response.end();
+    return;
+  }
+
+  let relative: string;
+  try {
+    relative = decodeURIComponent(urlPath.slice('/tv/'.length)) || 'index.html';
+  } catch {
+    relative = '';
+  }
+  const filePath = resolve(TV_APP_DIR, relative);
+  const type = STATIC_TYPES[extname(filePath)];
+
+  // Only plain files inside the app folder with a known type.
+  if (!relative || !type || !filePath.startsWith(TV_APP_DIR + sep)) {
+    response.writeHead(404, { 'content-type': 'text/plain; charset=utf-8' });
+    response.end('Not found');
+    return;
+  }
+
+  try {
+    const body = await readFile(filePath);
+    response.writeHead(200, { 'content-type': type, 'cache-control': 'no-cache' });
+    response.end(body);
+  } catch {
+    response.writeHead(404, { 'content-type': 'text/plain; charset=utf-8' });
+    response.end(`Not found. Is the webOS app at ${TV_APP_DIR}? Set TV_APP_DIR to change it.`);
+  }
+};
+
 const server = createServer(async (request, response) => {
-  if (request.url === '/health') {
+  const urlPath = (request.url ?? '/').split('?')[0] ?? '/';
+
+  if (urlPath === '/health') {
     sendJson(response, 200, { ok: true, hasGoogleApiKey: Boolean(apiKey) });
     return;
   }
 
-  if (request.url?.startsWith('/api/')) {
+  if (urlPath.startsWith('/api/')) {
     await handleApi(request, response);
+    return;
+  }
+
+  if (request.method === 'GET' && (urlPath === '/tv' || urlPath.startsWith('/tv/'))) {
+    await serveTvApp(urlPath, response);
     return;
   }
 
