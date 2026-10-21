@@ -1,4 +1,4 @@
-import { createServer } from 'node:http';
+import { createServer, type IncomingMessage, type ServerResponse } from 'node:http';
 import { genkit } from 'genkit';
 import { googleAI } from '@genkit-ai/google-genai';
 
@@ -62,10 +62,137 @@ const parseFormBody = async (request: RequestLike): Promise<string> => {
 
 type RequestLike = AsyncIterable<string | Buffer>;
 
+// --- JSON API used by the LG webOS TV app (see ../webos-app) ---
+
+const MAX_BODY_BYTES = 64 * 1024;
+const MAX_HISTORY = 20;
+const MAX_MESSAGE_CHARS = 4000;
+
+const TV_SYSTEM_PROMPT = `You are a friendly assistant shown on a TV screen.
+Reply in the same language the user writes in.
+Keep answers short and easy to read from a distance: a few sentences or a short list.
+Use plain text only - no Markdown tables, code blocks or headings.`;
+
+const corsHeaders = {
+  'access-control-allow-origin': '*',
+  'access-control-allow-methods': 'GET, POST, OPTIONS',
+  'access-control-allow-headers': 'content-type',
+  'access-control-max-age': '86400',
+};
+
+const sendJson = (
+  response: ServerResponse,
+  status: number,
+  payload: unknown,
+) => {
+  response.writeHead(status, { 'content-type': 'application/json; charset=utf-8', ...corsHeaders });
+  response.end(JSON.stringify(payload));
+};
+
+const readBody = async (request: RequestLike): Promise<string> => {
+  const chunks: Buffer[] = [];
+  let size = 0;
+  for await (const chunk of request) {
+    const buffer = Buffer.isBuffer(chunk) ? chunk : Buffer.from(chunk);
+    size += buffer.length;
+    if (size > MAX_BODY_BYTES) {
+      throw new Error('Request body too large');
+    }
+    chunks.push(buffer);
+  }
+  return Buffer.concat(chunks).toString('utf8');
+};
+
+type ChatMessage = { role: 'user' | 'model'; content: { text: string }[] };
+
+// Accepts { messages: [{ role: 'user' | 'model', text: string }] } and returns
+// the cleaned history, or null when the payload is invalid.
+const parseChatMessages = (raw: string): ChatMessage[] | null => {
+  let data: unknown;
+  try {
+    data = JSON.parse(raw);
+  } catch {
+    return null;
+  }
+  const list = (data as { messages?: unknown })?.messages;
+  if (!Array.isArray(list)) return null;
+
+  const messages: ChatMessage[] = [];
+  for (const item of list.slice(-MAX_HISTORY)) {
+    const role = (item as { role?: unknown })?.role;
+    const text = (item as { text?: unknown })?.text;
+    if ((role !== 'user' && role !== 'model') || typeof text !== 'string' || !text.trim()) {
+      return null;
+    }
+    messages.push({ role, content: [{ text: text.trim().slice(0, MAX_MESSAGE_CHARS) }] });
+  }
+  // Gemini expects the conversation to end with the user's turn.
+  if (messages.length === 0 || messages[messages.length - 1]?.role !== 'user') return null;
+  return messages;
+};
+
+const handleApi = async (
+  request: IncomingMessage,
+  response: ServerResponse,
+): Promise<void> => {
+  const path = (request.url ?? '').split('?')[0];
+
+  if (request.method === 'OPTIONS') {
+    response.writeHead(204, corsHeaders);
+    response.end();
+    return;
+  }
+
+  if (request.method === 'GET' && path === '/api/status') {
+    sendJson(response, 200, { ok: true, hasGoogleApiKey: Boolean(apiKey), model });
+    return;
+  }
+
+  if (request.method === 'POST' && path === '/api/chat') {
+    if (!apiKey) {
+      sendJson(response, 503, { error: 'GOOGLE_API_KEY is not configured on the server.' });
+      return;
+    }
+
+    let messages: ChatMessage[] | null;
+    try {
+      messages = parseChatMessages(await readBody(request));
+    } catch {
+      sendJson(response, 413, { error: 'Request body too large.' });
+      return;
+    }
+    if (!messages) {
+      sendJson(response, 400, {
+        error: 'Expected { messages: [{ role: "user" | "model", text }] } ending with a user message.',
+      });
+      return;
+    }
+
+    try {
+      const generation = await ai.generate({
+        model: googleAI.model(model),
+        system: TV_SYSTEM_PROMPT,
+        messages,
+      });
+      sendJson(response, 200, { reply: generation.text, model });
+    } catch (error) {
+      const message = error instanceof Error ? error.message : 'Unknown generation error';
+      sendJson(response, 502, { error: `Generation failed: ${message}` });
+    }
+    return;
+  }
+
+  sendJson(response, 404, { error: 'Not found' });
+};
+
 const server = createServer(async (request, response) => {
   if (request.url === '/health') {
-    response.writeHead(200, { 'content-type': 'application/json' });
-    response.end(JSON.stringify({ ok: true, hasGoogleApiKey: Boolean(apiKey) }));
+    sendJson(response, 200, { ok: true, hasGoogleApiKey: Boolean(apiKey) });
+    return;
+  }
+
+  if (request.url?.startsWith('/api/')) {
+    await handleApi(request, response);
     return;
   }
 

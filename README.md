@@ -1,5 +1,7 @@
 # Genkit starter app with Specific
 
+> **New:** [`webos-app/`](webos-app/README.md) is an LG webOS TV app ("Asystent AI") that chats with this Genkit server through the JSON API at `/api/status` and `/api/chat`.
+
 This repository now includes a minimal TypeScript Genkit app under `my-genkit-app/` that is wired up for [Specific](https://specific.dev/) local development and deployment.
 
 ## What changed

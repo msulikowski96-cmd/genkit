@@ -1,0 +1,18 @@
+{
+  "name": "webos-ai-assistant",
+  "version": "1.0.0",
+  "private": true,
+  "description": "LG webOS TV app: AI chat assistant backed by the Genkit server in ../my-genkit-app.",
+  "scripts": {
+    "preview": "ares-launch --hosted app",
+    "lint": "ares-package --check app",
+    "package": "ares-package app -o dist",
+    "install-tv": "ares-install -d tv dist/com.msulikowski.aiassistant_1.0.0_all.ipk",
+    "launch": "ares-launch -d tv com.msulikowski.aiassistant",
+    "inspect": "ares-inspect -d tv --app com.msulikowski.aiassistant --open",
+    "deploy": "npm run package && npm run install-tv && npm run launch"
+  },
+  "devDependencies": {
+    "@webos-tools/cli": "^3.2.6"
+  }
+}
