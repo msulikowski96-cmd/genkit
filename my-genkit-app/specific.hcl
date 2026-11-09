@@ -7,6 +7,8 @@ config "genkit_model" {
 build "app" {
   base = "node"
   command = "npm install"
+  # Ship the repo root so ../webos-app/app is deployed too; the server serves it at /tv/.
+  context = "../"
 }
 
 service "app" {

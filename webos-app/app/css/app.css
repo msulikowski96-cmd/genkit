@@ -1,5 +1,6 @@
 /*
- * Layout targets a fixed 1920x1080 TV canvas.
+ * Layout targets the 1920x1080 TV canvas; a media query at the end adapts it
+ * for phones when the app is opened in a mobile browser (served at /tv/).
  * Kept to CSS that old webOS Chromium builds support (no custom properties,
  * no flex "gap", no grid) so the app runs on webOS 4.x and newer.
  */
@@ -12,8 +13,8 @@
 
 html,
 body {
-  width: 1920px;
-  height: 1080px;
+  width: 100%;
+  height: 100%;
   overflow: hidden;
   background: #0d0b24;
   color: #f2f0ff;
@@ -48,6 +49,11 @@ input {
   display: none !important;
 }
 
+/* Focus is shown with the .focused class, not the browser outline. */
+[data-focusable]:focus {
+  outline: none;
+}
+
 /* ---------- Shell (TV safe area: 64px sides, 40px top/bottom) ---------- */
 
 #app {
@@ -55,8 +61,8 @@ input {
   display: flex;
   -webkit-flex-direction: column;
   flex-direction: column;
-  width: 1920px;
-  height: 1080px;
+  width: 100%;
+  height: 100%;
   padding: 40px 64px;
 }
 
@@ -441,8 +447,8 @@ input {
   position: fixed;
   top: 0;
   left: 0;
-  width: 1920px;
-  height: 1080px;
+  width: 100%;
+  height: 100%;
   display: -webkit-flex;
   display: flex;
   -webkit-align-items: center;
@@ -516,4 +522,236 @@ input {
 
 .dialog-small .dialog-actions .btn {
   margin: 0 12px;
+}
+
+/* ---------- Phones (app opened in a mobile browser at /tv/) ---------- */
+
+@media (max-width: 900px) {
+  html,
+  body {
+    font-size: 16px;
+  }
+
+  #app {
+    padding: 12px 16px;
+  }
+
+  .topbar {
+    height: auto;
+  }
+
+  .brand-icon {
+    width: 40px;
+    height: 40px;
+    margin-right: 10px;
+    border-radius: 10px;
+  }
+
+  .brand h1 {
+    font-size: 18px;
+    white-space: nowrap;
+  }
+
+  .status {
+    margin-right: 8px;
+    padding: 6px 10px;
+    font-size: 12px;
+    white-space: nowrap;
+  }
+
+  .status-dot {
+    width: 10px;
+    height: 10px;
+    margin-right: 6px;
+  }
+
+  .topbar .btn {
+    height: 40px;
+    padding: 0 10px;
+    font-size: 13px;
+  }
+
+  .main {
+    -webkit-flex-direction: column;
+    flex-direction: column;
+    margin-top: 12px;
+  }
+
+  .chat {
+    min-height: 0;
+    margin-right: 0;
+  }
+
+  .chat-log {
+    overflow-y: auto;
+    -webkit-overflow-scrolling: touch;
+    padding: 12px;
+    border-width: 2px;
+    border-radius: 16px;
+  }
+
+  .chat-log.focused {
+    border-color: transparent;
+  }
+
+  .msg {
+    max-width: 92%;
+    margin-bottom: 10px;
+    padding: 10px 14px;
+    border-radius: 16px;
+    font-size: 16px;
+  }
+
+  .msg-author {
+    margin-bottom: 2px;
+    font-size: 11px;
+  }
+
+  .msg-system,
+  .msg-error {
+    max-width: 100%;
+    font-size: 15px;
+  }
+
+  .typing span {
+    width: 8px;
+    height: 8px;
+    margin-right: 6px;
+  }
+
+  .composer {
+    margin-top: 10px;
+  }
+
+  .field {
+    margin-right: 10px;
+    border-width: 2px;
+    border-radius: 14px;
+  }
+
+  .field input {
+    height: 48px;
+    padding: 0 14px;
+    font-size: 16px; /* 16px stops iOS from zooming in on focus */
+  }
+
+  .btn {
+    height: 48px;
+    padding: 0 18px;
+    border-width: 2px;
+    border-radius: 14px;
+    font-size: 16px;
+  }
+
+  .btn.focused,
+  .tile.focused {
+    -webkit-transform: none;
+    transform: none;
+  }
+
+  /* Quick questions become a horizontally scrolling row of chips. */
+  .sidebar {
+    -webkit-flex-direction: row;
+    flex-direction: row;
+    -webkit-align-items: center;
+    align-items: center;
+    width: auto;
+    margin-top: 10px;
+  }
+
+  .sidebar h2 {
+    display: none;
+  }
+
+  .suggestions {
+    display: -webkit-flex;
+    display: flex;
+    min-width: 0;
+    overflow-x: auto;
+    -webkit-overflow-scrolling: touch;
+  }
+
+  .tile {
+    width: auto;
+    height: 40px;
+    margin: 0 8px 0 0;
+    padding: 0 14px;
+    border-width: 2px;
+    border-radius: 20px;
+    font-size: 14px;
+    white-space: nowrap;
+    -webkit-flex-shrink: 0;
+    flex-shrink: 0;
+  }
+
+  .tile:before {
+    display: none;
+  }
+
+  .sidebar .btn-block {
+    display: inline-block;
+    width: auto;
+    margin-left: 8px;
+    height: 40px;
+    padding: 0 12px;
+    font-size: 14px;
+    -webkit-flex-shrink: 0;
+    flex-shrink: 0;
+  }
+
+  .hints {
+    display: none;
+  }
+
+  .dialog,
+  .dialog-small {
+    width: -webkit-calc(100% - 32px);
+    width: calc(100% - 32px);
+    padding: 20px;
+    border-radius: 20px;
+  }
+
+  .dialog h2 {
+    margin-bottom: 16px;
+    font-size: 22px;
+  }
+
+  .label {
+    font-size: 14px;
+  }
+
+  .help {
+    font-size: 13px;
+  }
+
+  .test-result {
+    min-height: 20px;
+    font-size: 14px;
+  }
+
+  .dialog-actions {
+    -webkit-flex-wrap: wrap;
+    flex-wrap: wrap;
+    margin-top: 12px;
+  }
+
+  .dialog-actions .btn,
+  .dialog-small .dialog-actions .btn {
+    margin: 8px 0 0 8px;
+  }
+}
+
+/* Very narrow phones: the status pill keeps only its coloured dot. */
+@media (max-width: 380px) {
+  #status-text {
+    display: none;
+  }
+
+  .status {
+    padding: 10px;
+  }
+
+  .status-dot {
+    margin-right: 0;
+  }
 }

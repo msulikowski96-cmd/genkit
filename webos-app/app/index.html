@@ -2,8 +2,18 @@
 <html lang="pl">
 <head>
   <meta charset="UTF-8">
-  <meta name="viewport" content="width=1920, height=1080">
+  <meta name="viewport" id="viewport" content="width=1920, height=1080">
+  <script>
+    // On LG TVs keep the fixed 1920x1080 canvas; in phone/desktop browsers use the device width.
+    window.IS_TV = /Web0S|webOS/i.test(navigator.userAgent) || !!window.PalmSystem;
+    if (!window.IS_TV) {
+      document.getElementById('viewport').setAttribute('content', 'width=device-width, initial-scale=1');
+    }
+  </script>
   <title>Asystent AI</title>
+  <link rel="icon" href="icon.png">
+  <link rel="apple-touch-icon" href="largeIcon.png">
+  <meta name="theme-color" content="#0d0b24">
   <link rel="stylesheet" href="css/app.css">
 </head>
 <body>

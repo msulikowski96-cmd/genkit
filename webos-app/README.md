@@ -1,6 +1,6 @@
 # Asystent AI – aplikacja na telewizory LG (webOS)
 
-Aplikacja webOS TV: czat z asystentem AI sterowany pilotem. Odpowiedzi generuje serwer Genkit z katalogu [`../my-genkit-app`](../my-genkit-app) (model Gemini).
+Aplikacja webOS TV: czat z asystentem AI sterowany pilotem. Działa też w przeglądarce telefonu (zob. [Na telefonie](#na-telefonie)). Odpowiedzi generuje serwer Genkit z katalogu [`../my-genkit-app`](../my-genkit-app) (model Gemini).
 
 ## Funkcje
 
@@ -76,6 +76,18 @@ Pozostałe komendy:
 | `npm run preview`    | podgląd w przeglądarce na komputerze            |
 
 > Sesja Developer Mode na TV wygasa po ~50 godzinach. Przedłużysz ją przyciskiem **Extend** w aplikacji Developer Mode.
+
+## Na telefonie
+
+Serwer Genkit udostępnia tę samą aplikację pod adresem **`/tv/`**, z układem dopasowanym do telefonu:
+
+1. Uruchom serwer (punkt 1 powyżej) na komputerze albo w chmurze.
+2. Na telefonie otwórz w przeglądarce `http://ADRES_KOMPUTERA:3000/tv/`. Telefon musi być w tej samej sieci Wi-Fi. Jeśli serwer jest w internecie (np. po `specific deploy` albo na Replit), użyj jego publicznego adresu z dopiskiem `/tv/`.
+3. Gotowe. Adres serwera ustawia się sam, nic nie trzeba konfigurować.
+
+Wskazówka: w menu przeglądarki wybierz „Dodaj do ekranu głównego”, a aplikacja będzie miała własną ikonę.
+
+Jeśli folder aplikacji leży gdzie indziej niż `../webos-app/app`, wskaż go serwerowi zmienną `TV_APP_DIR`.
 
 ## Podgląd bez telewizora
 
